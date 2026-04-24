@@ -36,8 +36,8 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
         run: |
           cd src
-          output_name: notify-${{ matrix.goos }}-${{ matrix.goarch }}.exe
-          if (${{ matrix.goarch }} -eq "amd64") { $output_name = "notify.exe" }
+          $output_name = "notify-${{ matrix.goos }}-${{ matrix.goarch }}.exe"
+          if ("${{ matrix.goarch }}" -eq "amd64") { $output_name = "notify.exe" }
           go build -o ../bin/$output_name .
 
       - name: Upload Release Asset
