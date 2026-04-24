@@ -10,8 +10,8 @@
       "name": "claude-notifications-win",
       "description": "Windows toast notifications for Claude Code hooks - task complete and permission prompts",
       "source": {
-        "source": "url",
-        "url": "https://github.com/liuzhicheng1775/claude-notifications-win.git"
+        "source": "github",
+        "repo": "liuzhicheng1775/claude-notifications-win"
       }
     }
   ]
