@@ -37,7 +37,6 @@ jobs:
         with:
           draft: true
           prerelease: false
-          generate_release_notes: true
           files: |
             bin/notify.exe
             bin/notify-windows-386.exe
