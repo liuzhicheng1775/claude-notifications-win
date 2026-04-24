@@ -1,20 +1,27 @@
 {
-  "name": "claude-notifications-win",
-  "version": "1.0.0",
-  "description": "Windows toast notifications for Claude Code hooks - task complete and permission prompts",
-  "hooks": {
-    "Stop": [{
-      "hooks": [{
-        "type": "command",
-        "command": "${CLAUDE_PLUGIN_ROOT}/bin/hook-wrapper.bat stop"
-      }]
-    }],
-    "Notification": [{
-      "matcher": "permission_prompt",
-      "hooks": [{
-        "type": "command",
-        "command": "${CLAUDE_PLUGIN_ROOT}/bin/hook-wrapper.bat permission"
-      }]
-    }]
-  }
+  "owner": {
+    "name": "liuzhicheng1775"
+  },
+  "plugins": [
+    {
+      "name": "claude-notifications-win",
+      "version": "1.0.0",
+      "description": "Windows toast notifications for Claude Code hooks - task complete and permission prompts",
+      "hooks": {
+        "Stop": [{
+          "hooks": [{
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/bin/hook-wrapper.bat stop"
+          }]
+        }],
+        "Notification": [{
+          "matcher": "permission_prompt",
+          "hooks": [{
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/bin/hook-wrapper.bat permission"
+          }]
+        }]
+      }
+    }
+  ]
 }
