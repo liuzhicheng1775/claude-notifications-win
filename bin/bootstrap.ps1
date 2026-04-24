@@ -7,7 +7,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$REPO_OWNER = "YOUR_USERNAME"
+$REPO_OWNER = "liuzhicheng1775"
 $REPO_NAME = "claude-notifications-win"
 $API_URL = "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/releases/latest"
 $BINARY_NAME = "notify.exe"
