@@ -5,7 +5,7 @@ bin/*.exe
 
 # Go
 src/vendor/
-src/*.sum
+*.sum
 
 # IDE
 .vscode/

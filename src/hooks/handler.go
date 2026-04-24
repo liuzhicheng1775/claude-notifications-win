@@ -1,8 +1,8 @@
 package hooks
 
 import (
-	"claude-notifications-win/config"
-	"claude-notifications-win/notification"
+	"claude-notifications-win/src/config"
+	"claude-notifications-win/src/notification"
 )
 
 type Handler interface {

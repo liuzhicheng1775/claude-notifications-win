@@ -26,19 +26,16 @@ jobs:
           go-version: '1.21'
 
       - name: Get dependencies
-        run: |
-          cd src
-          go mod download
+        run: go mod download
 
       - name: Build
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
         run: |
-          cd src
           $output_name = "notify-${{ matrix.goos }}-${{ matrix.goarch }}.exe"
           if ("${{ matrix.goarch }}" -eq "amd64") { $output_name = "notify.exe" }
-          go build -o ../bin/$output_name .
+          go build -o bin/$output_name .
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v1

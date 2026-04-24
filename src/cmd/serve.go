@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"claude-notifications-win/config"
-	"claude-notifications-win/hooks"
-	"claude-notifications-win/notification"
+	"claude-notifications-win/src/config"
+	"claude-notifications-win/src/hooks"
+	"claude-notifications-win/src/notification"
 	"os"
 	"strings"
 )

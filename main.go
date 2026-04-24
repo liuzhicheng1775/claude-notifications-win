@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"claude-notifications-win/cmd"
+	"claude-notifications-win/src/cmd"
 )
 
 const version = "1.0.0"
