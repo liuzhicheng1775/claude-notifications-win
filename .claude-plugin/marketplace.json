@@ -1,26 +1,17 @@
 {
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "claude-notifications-win",
+  "description": "Windows toast notifications for Claude Code hooks - task complete and permission prompts",
   "owner": {
     "name": "liuzhicheng1775"
   },
   "plugins": [
     {
       "name": "claude-notifications-win",
-      "version": "1.0.0",
       "description": "Windows toast notifications for Claude Code hooks - task complete and permission prompts",
-      "hooks": {
-        "Stop": [{
-          "hooks": [{
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/bin/hook-wrapper.bat stop"
-          }]
-        }],
-        "Notification": [{
-          "matcher": "permission_prompt",
-          "hooks": [{
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/bin/hook-wrapper.bat permission"
-          }]
-        }]
+      "source": {
+        "source": "url",
+        "url": "https://github.com/liuzhicheng1775/claude-notifications-win.git"
       }
     }
   ]
