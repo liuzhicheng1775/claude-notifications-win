@@ -8,14 +8,6 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-    strategy:
-      matrix:
-        goarch:
-          - amd64
-          - 386
-        goos:
-          - windows
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,32 +20,26 @@ jobs:
       - name: Get dependencies
         run: go mod download
 
-      - name: Build
+      - name: Build amd64
         env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-        run: |
-          $output_name = "notify-${{ matrix.goos }}-${{ matrix.goarch }}.exe"
-          if ("${{ matrix.goarch }}" -eq "amd64") { $output_name = "notify.exe" }
-          go build -o bin/$output_name .
+          GOOS: windows
+          GOARCH: amd64
+        run: go build -o bin/notify.exe .
 
-      - name: Upload Release Asset
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            bin/*.exe
+      - name: Build 386
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOOS: windows
+          GOARCH: 386
+        run: go build -o bin/notify-windows-386.exe .
 
-  create-release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           draft: true
           prerelease: false
           generate_release_notes: true
+          files: |
+            bin/notify.exe
+            bin/notify-windows-386.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
