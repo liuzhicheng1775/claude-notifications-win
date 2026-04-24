@@ -7,9 +7,6 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$REPO_OWNER = "liuzhicheng1775"
-$REPO_NAME = "claude-notifications-win"
-$API_URL = "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/releases/latest"
 $BINARY_NAME = "notify.exe"
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -17,13 +14,14 @@ $BinaryPath = Join-Path $ScriptDir $BINARY_NAME
 
 function Get-LatestRelease {
     try {
-        $response = Invoke-RestMethod -Uri $API_URL -UseBasicParsing
+        $apiUrl = "https://api.github.com/repos/liuzhicheng1775/claude-notifications-win/releases/latest"
+        $response = Invoke-RestMethod -Uri $apiUrl -UseBasicParsing
         return @{
             TagName = $response.tag_name
             Assets = $response.assets
         }
     } catch {
-        Write-Host "[claude-notifications-win] ERROR: Failed to fetch latest release: $_" >&2
+        [Console]::Error.WriteLine("[claude-notifications-win] ERROR: Failed to fetch latest release: $_")
         return $null
     }
 }
@@ -41,7 +39,7 @@ function Get-DownloadUrl {
     }
 
     # Fallback: construct URL
-    return "https://github.com/$REPO_OWNER/$REPO_NAME/releases/download/$Version/$downloadName"
+    return "https://github.com/liuzhicheng1775/claude-notifications-win/releases/download/$Version/$downloadName"
 }
 
 function Install-Binary {
@@ -52,7 +50,7 @@ function Install-Binary {
         Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing
         Write-Host "[claude-notifications-win] Binary installed at: $Destination"
     } catch {
-        Write-Host "[claude-notifications-win] ERROR: Failed to download binary: $_" >&2
+        [Console]::Error.WriteLine("[claude-notifications-win] ERROR: Failed to download binary: $_")
         throw
     }
 }
@@ -89,6 +87,6 @@ try {
     Install-Binary -Url $downloadUrl -Destination $BinaryPath
 
 } catch {
-    Write-Host "[claude-notifications-win] Bootstrap failed: $_" >&2
+    [Console]::Error.WriteLine("[claude-notifications-win] Bootstrap failed: $_")
     exit 1
 }
