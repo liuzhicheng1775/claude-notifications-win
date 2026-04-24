@@ -1,0 +1,21 @@
+# Binaries
+bin/*.exe
+!bin/hook-wrapper.bat
+!bin/bootstrap.ps1
+
+# Go
+src/vendor/
+src/*.sum
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
