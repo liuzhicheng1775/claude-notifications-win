@@ -29,7 +29,7 @@ Windows toast notifications for Claude Code hooks.
 
 2. Install plugin:
    ```
-   /plugin install claaude-notifications-win@claude-notifications-win
+   /plugin install claude-notifications-win@claude-notifications-win
    ```
 
 3. Restart Claude Code

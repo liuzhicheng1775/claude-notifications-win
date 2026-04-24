@@ -30,7 +30,9 @@ function Get-DownloadUrl {
     param($Assets, [string]$Version)
 
     $arch = if ([Environment]::Is64BitOperatingSystem) { "amd64" } else { "386" }
-    $downloadName = "notify-windows-$arch.exe"
+
+    # amd64 uses "notify.exe", 386 uses "notify-windows-386.exe"
+    $downloadName = if ($arch -eq "amd64") { "notify.exe" } else { "notify-windows-$arch.exe" }
 
     foreach ($asset in $Assets) {
         if ($asset.name -eq $downloadName) {
