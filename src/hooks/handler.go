@@ -6,12 +6,12 @@ import (
 )
 
 type Handler interface {
-	Handle(reason string) error
+	Handle(reason string, taskName string) error
 }
 
 type StopHandler struct {
 	notifier *notification.WindowsNotifier
-	config    *config.Config
+	config   *config.Config
 }
 
 func NewStopHandler(notifier *notification.WindowsNotifier, cfg *config.Config) *StopHandler {
@@ -21,11 +21,15 @@ func NewStopHandler(notifier *notification.WindowsNotifier, cfg *config.Config) 
 	}
 }
 
-func (h *StopHandler) Handle(reason string) error {
+func (h *StopHandler) Handle(reason string, taskName string) error {
 	title := "Claude Code"
-	message := "Task completed"
+	if taskName != "" {
+		message := "任务完成: " + taskName
+		return h.notifier.Send(title, message)
+	}
+	message := "任务已完成"
 	if reason != "" {
-		message = "Task completed: " + reason
+		message = "任务完成: " + reason
 	}
 	return h.notifier.Send(title, message)
 }
@@ -42,15 +46,18 @@ func NewPermissionHandler(notifier *notification.WindowsNotifier, cfg *config.Co
 	}
 }
 
-func (h *PermissionHandler) Handle(prompt string) error {
-	title := "Claude Code - Permission Required"
-	message := "A permission is required"
+func (h *PermissionHandler) Handle(prompt string, context string) error {
+	title := "Claude Code - 需要授权"
+	message := "请授权以继续操作"
 	if prompt != "" {
 		// Truncate long prompts
 		if len(prompt) > 100 {
 			prompt = prompt[:97] + "..."
 		}
 		message = prompt
+	}
+	if context != "" && context != prompt {
+		message = context + "\n\n" + message
 	}
 	return h.notifier.Send(title, message)
 }

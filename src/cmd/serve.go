@@ -1,18 +1,26 @@
 package cmd
 
 import (
+	"bufio"
 	"claude-notifications-win/src/config"
 	"claude-notifications-win/src/hooks"
 	"claude-notifications-win/src/notification"
+	"encoding/json"
 	"os"
 	"strings"
 )
+
+type ClaudeHookPayload struct {
+	Type      string `json:"type"`
+	Subject   string `json:"subject"`
+	StopType  string `json:"stopType,omitempty"`
+	Reason    string `json:"reason,omitempty"`
+}
 
 func HandleStopHook() error {
 	notifier := notification.NewWindowsNotifier()
 	cfg, err := config.Load()
 	if err != nil {
-		// Use default config if load fails
 		cfg = &config.Config{}
 	}
 
@@ -21,7 +29,10 @@ func HandleStopHook() error {
 	// Get optional reason from args
 	reason := getFlag("--reason")
 
-	return handler.Handle(reason)
+	// Read from stdin for task info from Claude Code
+	taskName := readStdin()
+
+	return handler.Handle(reason, taskName)
 }
 
 func HandlePermissionHook() error {
@@ -36,7 +47,40 @@ func HandlePermissionHook() error {
 	// Get prompt from args
 	prompt := getFlag("--prompt")
 
-	return handler.Handle(prompt)
+	// Read from stdin for additional context
+	context := readStdin()
+
+	return handler.Handle(prompt, context)
+}
+
+func readStdin() string {
+	// Check if stdin has data
+	stat, _ := os.Stdin.Stat()
+	if (stat.Mode() & os.ModeCharDevice) == 0 {
+		reader := bufio.NewReader(os.Stdin)
+		var sb strings.Builder
+		scanner := bufio.NewScanner(reader)
+		for scanner.Scan() {
+			sb.Write(scanner.Bytes())
+			sb.WriteByte('\n')
+		}
+		input := strings.TrimSpace(sb.String())
+		if input != "" {
+			// Try to parse as JSON first
+			var payload ClaudeHookPayload
+			if err := json.Unmarshal([]byte(input), &payload); err == nil {
+				if payload.Subject != "" {
+					return payload.Subject
+				}
+				if payload.Reason != "" {
+					return payload.Reason
+				}
+			}
+			// Return raw input if not JSON
+			return input
+		}
+	}
+	return ""
 }
 
 func getFlag(name string) string {
