@@ -18,26 +18,7 @@
 
 ## 安装方法
 
-### 方法一：Claude Code 插件（推荐）
-
-> **注意**：如果遇到 SSH 密钥问题，可先运行以下命令配置 git 使用 HTTPS：
-> ```bash
-> git config --global url."https://github.com/".insteadOf "git@github.com:"
-> ```
-
-1. 添加插件市场：
-   ```
-   /plugin marketplace add liuzhicheng1775/claude-notifications-win
-   ```
-
-2. 安装插件：
-   ```
-   /plugin install claude-notifications-win@claude-notifications-win
-   ```
-
-3. 重启 Claude Code
-
-### 方法二：手动安装
+### 方法一：手动安装（推荐）
 
 1. 从 [Releases](https://github.com/liuzhicheng1775/claude-notifications-win/releases) 下载最新的 `notify.exe`
 2. 将 `notify.exe` 放到任意目录
@@ -61,6 +42,25 @@
      }
    }
    ```
+
+### 方法二：Claude Code 插件
+
+> **注意**：如果遇到 SSH 密钥问题，可先运行以下命令配置 git 使用 HTTPS：
+> ```bash
+> git config --global url."https://github.com/".insteadOf "git@github.com:"
+> ```
+
+1. 添加插件市场：
+   ```
+   /plugin marketplace add liuzhicheng1775/claude-notifications-win
+   ```
+
+2. 安装插件：
+   ```
+   /plugin install claude-notifications-win@claude-notifications-win
+   ```
+
+3. 重启 Claude Code
 
 ## 使用方法
 
