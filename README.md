@@ -21,7 +21,15 @@
 ### 方法一：手动安装（推荐）
 
 1. 从 [Releases](https://github.com/liuzhicheng1775/claude-notifications-win/releases) 下载最新的 `notify.exe`
-2. 将 `notify.exe` 放到任意目录
+2. 在 `notify.exe` 同目录下创建 `config.json`（可选，默认为全部开启）：
+   ```json
+   {
+     "notifications": {
+       "stop": { "enabled": true },
+       "permission": { "enabled": true }
+     }
+   }
+   ```
 3. 在 `~/.claude/settings.json` 中配置 hooks：
    ```json
    {
@@ -70,23 +78,6 @@
 |---------|---------|
 | 任务完成 | Claude Code 完成一个任务 |
 | 需要权限 | Claude Code 需要您授权操作 |
-
-## 配置选项
-
-在 `notify.exe` 同目录下创建 `config.json`：
-
-```json
-{
-  "notifications": {
-    "stop": {
-      "enabled": true
-    },
-    "permission": {
-      "enabled": true
-    }
-  }
-}
-```
 
 ## 开发
 
