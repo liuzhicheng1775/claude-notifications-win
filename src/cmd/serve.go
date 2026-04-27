@@ -70,7 +70,7 @@ func readStdin() string {
 			var payload ClaudeHookPayload
 			if err := json.Unmarshal([]byte(input), &payload); err == nil {
 				if payload.Subject != "" {
-					return payload.Subject
+					return extractTaskName(payload.Subject)
 				}
 				if payload.Reason != "" {
 					return payload.Reason
@@ -81,6 +81,29 @@ func readStdin() string {
 		}
 	}
 	return ""
+}
+
+// extractTaskName extracts the meaningful task name from a potentially noisy subject string
+func extractTaskName(subject string) string {
+	// Pattern: "[会话:xxx] ... - 任务：xxx" or "xxx - 任务：xxx"
+	// Extract the part after " - 任务：" or just after " - " if it looks like a task
+	if idx := strings.LastIndex(subject, " - 任务："); idx != -1 {
+		return subject[idx+len(" - 任务："):]
+	}
+	if idx := strings.LastIndex(subject, "- 任务："); idx != -1 {
+		return subject[idx+len("- 任务："):]
+	}
+	// If no clear task marker, try to find "任务：" anywhere
+	if idx := strings.Index(subject, "任务："); idx != -1 {
+		return subject[idx+len("任务："):]
+	}
+	// If subject starts with session pattern, try to extract after ]
+	// Pattern: "[会话:xxx] xxx" or "[会话 xxx] xxx"
+	if idx := strings.Index(subject, "]"); idx != -1 && idx < len(subject)-1 {
+		return strings.TrimSpace(subject[idx+1:])
+	}
+	// Return cleaned subject, removing leading brackets/prefixes
+	return strings.TrimSpace(subject)
 }
 
 func getFlag(name string) string {

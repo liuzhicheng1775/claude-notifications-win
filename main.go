@@ -8,7 +8,7 @@ import (
 	"claude-notifications-win/src/cmd"
 )
 
-const version = "1.0.0"
+var version = "dev" // Set via -ldflags at build time
 
 func main() {
 	if len(os.Args) < 2 {

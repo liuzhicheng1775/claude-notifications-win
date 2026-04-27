@@ -24,12 +24,16 @@ func NewStopHandler(notifier *notification.WindowsNotifier, cfg *config.Config) 
 func (h *StopHandler) Handle(reason string, taskName string) error {
 	title := "Claude Code"
 	if taskName != "" {
-		message := "任务完成: " + taskName
+		// Truncate long task names
+		if len(taskName) > 50 {
+			taskName = taskName[:47] + "..."
+		}
+		message := taskName
 		return h.notifier.Send(title, message)
 	}
 	message := "任务已完成"
 	if reason != "" {
-		message = "任务完成: " + reason
+		message = reason
 	}
 	return h.notifier.Send(title, message)
 }

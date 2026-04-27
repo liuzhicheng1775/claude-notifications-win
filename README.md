@@ -93,9 +93,9 @@
 ### 从源码构建
 
 ```bash
-cd src
 go mod download
-go build -o ../bin/notify.exe .
+# 版本号从 git tag 自动获取（64 位）
+GOARCH=amd64 go build -ldflags "-X main.version=$(git describe --tags --abbrev=0 | sed 's/^v//')" -o bin/notify.exe .
 ```
 
 ### 项目结构
