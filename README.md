@@ -20,6 +20,11 @@
 
 ### 方法一：Claude Code 插件（推荐）
 
+> **注意**：如果遇到 SSH 密钥问题，可先运行以下命令配置 git 使用 HTTPS：
+> ```bash
+> git config --global url."https://github.com/".insteadOf "git@github.com:"
+> ```
+
 1. 添加插件市场：
    ```
    /plugin marketplace add liuzhicheng1775/claude-notifications-win

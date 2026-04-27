@@ -22,6 +22,11 @@ Windows toast notifications for Claude Code hooks.
 
 ### Option 1: Claude Code Plugin (Recommended)
 
+> **Note**: If you encounter SSH key issues, run this first to configure git to use HTTPS:
+> ```bash
+> git config --global url."https://github.com/".insteadOf "git@github.com:"
+> ```
+
 1. Add marketplace:
    ```
    /plugin marketplace add liuzhicheng1775/claude-notifications-win
