@@ -21,7 +21,7 @@
 ### 方法一：手动安装（推荐）
 
 1. 从 [Releases](https://github.com/liuzhicheng1775/claude-notifications-win/releases) 下载最新的 `notify.exe`
-2. 在 `notify.exe` 同目录下创建 `config.json`（可选，默认为全部开启）：
+2. 在 `notify.exe` 同目录下创建 `config.json`（可选，默认全部开启）：
    ```json
    {
      "notifications": {
@@ -84,18 +84,16 @@
 ### 从源码构建
 
 ```bash
+cd src
 go mod download
 # 版本号从 git tag 自动获取（64 位）
-GOARCH=amd64 go build -ldflags "-X main.version=$(git describe --tags --abbrev=0 | sed 's/^v//')" -o bin/notify.exe .
+GOARCH=amd64 go build -ldflags "-X main.version=$(git describe --tags --abbrev=0 | sed 's/^v//')" -o ../bin/notify.exe .
 ```
 
 ### 项目结构
 
 ```
 claude-notifications-win/
-├── .claude-plugin/
-│   ├── plugin.json          # 插件配置
-│   └── marketplace.json     # 市场元数据
 ├── bin/
 │   ├── notify.exe          # 编译后的二进制文件
 │   ├── hook-wrapper.bat    # Windows hook 包装器
@@ -106,6 +104,9 @@ claude-notifications-win/
 │   ├── hooks/              # Hook 实现
 │   ├── notification/        # Windows 气泡通知
 │   └── config/             # 配置管理
+├── .claude-plugin/
+│   ├── plugin.json          # 插件配置
+│   └── marketplace.json     # 市场元数据
 └── README.md
 ```
 

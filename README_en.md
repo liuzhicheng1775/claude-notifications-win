@@ -20,29 +20,18 @@ Windows toast notifications for Claude Code hooks.
 
 ## Installation
 
-### Option 1: Claude Code Plugin (Recommended)
-
-> **Note**: If you encounter SSH key issues, run this first to configure git to use HTTPS:
-> ```bash
-> git config --global url."https://github.com/".insteadOf "git@github.com:"
-> ```
-
-1. Add marketplace:
-   ```
-   /plugin marketplace add liuzhicheng1775/claude-notifications-win
-   ```
-
-2. Install plugin:
-   ```
-   /plugin install claude-notifications-win@claude-notifications-win
-   ```
-
-3. Restart Claude Code
-
-### Option 2: Manual Installation
+### Option 1: Manual Installation (Recommended)
 
 1. Download the latest `notify.exe` from [Releases](https://github.com/liuzhicheng1775/claude-notifications-win/releases)
-2. Place `notify.exe` in a directory
+2. Create `config.json` in the same directory as `notify.exe` (optional, defaults to all enabled):
+   ```json
+   {
+     "notifications": {
+       "stop": { "enabled": true },
+       "permission": { "enabled": true }
+     }
+   }
+   ```
 3. Configure hooks in `~/.claude/settings.json`:
    ```json
    {
@@ -64,6 +53,25 @@ Windows toast notifications for Claude Code hooks.
    }
    ```
 
+### Option 2: Claude Code Plugin
+
+> **Note**: If you encounter SSH key issues, run this first to configure git to use HTTPS:
+> ```bash
+> git config --global url."https://github.com/".insteadOf "git@github.com:"
+> ```
+
+1. Add marketplace:
+   ```
+   /plugin marketplace add liuzhicheng1775/claude-notifications-win
+   ```
+
+2. Install plugin:
+   ```
+   /plugin install claude-notifications-win@claude-notifications-win
+   ```
+
+3. Restart Claude Code
+
 ## Usage
 
 After installation, notifications will automatically appear:
@@ -73,23 +81,6 @@ After installation, notifications will automatically appear:
 | Task Complete | When Claude Code finishes a task |
 | Permission Required | When Claude Code needs your approval |
 
-## Configuration
-
-Create `config.json` in the same directory as `notify.exe`:
-
-```json
-{
-  "notifications": {
-    "stop": {
-      "enabled": true
-    },
-    "permission": {
-      "enabled": true
-    }
-  }
-}
-```
-
 ## Development
 
 ### Building from Source
@@ -97,16 +88,14 @@ Create `config.json` in the same directory as `notify.exe`:
 ```bash
 cd src
 go mod download
-go build -o ../bin/notify.exe .
+# Version auto-filled from git tag (64-bit)
+GOARCH=amd64 go build -ldflags "-X main.version=$(git describe --tags --abbrev=0 | sed 's/^v//')" -o ../bin/notify.exe .
 ```
 
 ### Project Structure
 
 ```
 claude-notifications-win/
-├── .claude-plugin/
-│   ├── plugin.json          # Plugin configuration
-│   └── marketplace.json     # Marketplace metadata
 ├── bin/
 │   ├── notify.exe          # Built binary
 │   ├── hook-wrapper.bat    # Windows hook wrapper
@@ -117,6 +106,9 @@ claude-notifications-win/
 │   ├── hooks/              # Hook implementations
 │   ├── notification/        # Windows toast notifications
 │   └── config/             # Configuration
+├── .claude-plugin/
+│   ├── plugin.json          # Plugin configuration
+│   └── marketplace.json     # Marketplace metadata
 └── README.md
 ```
 
