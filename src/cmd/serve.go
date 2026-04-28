@@ -75,12 +75,31 @@ func readStdin() string {
 				if payload.Reason != "" {
 					return payload.Reason
 				}
+				// Valid JSON but no useful content - return empty to skip notification
+				return ""
 			}
-			// Return raw input if not JSON
-			return input
+			// Return raw input if not JSON, but filter out session-like garbage
+			return filterGarbage(input)
 		}
 	}
 	return ""
+}
+
+// filterGarbage removes unwanted noise from raw input
+func filterGarbage(input string) string {
+	// If input looks like session ID garbage, return empty
+	if strings.Contains(input, "session id") || strings.Contains(input, "session") {
+		// Check if it's mostly session garbage
+		lines := strings.Split(input, "\n")
+		if len(lines) > 0 && strings.Contains(lines[0], "session") {
+			return ""
+		}
+	}
+	// If input is mostly JSON-like garbage, return empty
+	if strings.HasPrefix(strings.TrimSpace(input), "{") && strings.Contains(input, "\"session") {
+		return ""
+	}
+	return input
 }
 
 // extractTaskName extracts the meaningful task name from a potentially noisy subject string
