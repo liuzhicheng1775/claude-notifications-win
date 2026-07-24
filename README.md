@@ -81,6 +81,8 @@
 
 ## 飞书通知（可选）
 
+> 详细配置步骤见 [docs/feishu-notification.md](./docs/feishu-notification.md)。
+
 除 Windows 气泡通知外，还支持将通知发送到飞书群。在飞书群创建自定义机器人，获取 webhook URL（若开启了签名校验，还需 secret），填入 `config.json`：
 
 ```json

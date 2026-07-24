@@ -83,6 +83,8 @@ After installation, notifications will automatically appear:
 
 ## Feishu Notification (Optional)
 
+> See [docs/feishu-notification.md](./docs/feishu-notification.md) for detailed setup steps.
+
 In addition to Windows toast, notifications can be sent to a Feishu group. Create a custom bot in your Feishu group, obtain the webhook URL (and secret if signature verification is enabled), and add it to `config.json`:
 
 ```json
