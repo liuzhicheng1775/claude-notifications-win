@@ -172,6 +172,10 @@ func TestTruncateTitle(t *testing.T) {
 		{"正好 50 rune 不截断", strings.Repeat("a", 50), strings.Repeat("a", 50)},
 		{"51 rune 截断加省略号", strings.Repeat("a", 51), strings.Repeat("a", 50) + "..."},
 		{"中文按 rune 截断", strings.Repeat("中", 60), strings.Repeat("中", 50) + "..."},
+		{"剥单个 XML 标签保留内容", "<command-name>/resume-session</command-name>", "/resume-session"},
+		{"剥多个 XML 标签", "<command-message>resume-session</command-message>\n<command-name>/resume-session</command-name>", "resume-session /resume-session"},
+		{"XML 标签加正常文本", "<foo>标题</foo> 后续文本", "标题 后续文本"},
+		{"只剩标签内容为空时返回空", "<only-tag></only-tag>", ""},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

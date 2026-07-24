@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -47,20 +48,16 @@ func HandleStopHook() error {
 		})
 	}
 
-	// 会话标题从 transcript 第一条 user message 推导；
-	// 同时用作通知 message（让用户在通知里直接看到会话主题）
+	// 会话标题从 transcript 第一条 user message 推导，
+	// 仅在会话信息块里展示（不重复填到 message，避免飞书消息重复显示）
 	var sessionTitle string
 	if payload.TranscriptPath != "" {
 		sessionTitle = extractSessionTitle(payload.TranscriptPath)
 	}
-	message := "任务已完成"
-	if sessionTitle != "" {
-		message = sessionTitle
-	}
 
 	return handler.Handle(notification.Notification{
 		Title:        "Claude Code",
-		Message:      message,
+		Message:      "任务已完成",
 		SessionID:    payload.SessionID,
 		SessionTitle: sessionTitle,
 	})
@@ -223,9 +220,18 @@ func extractUserText(messageRaw json.RawMessage) string {
 	return ""
 }
 
-// truncateTitle 压缩空白并截断到 50 个 rune，超出加 "..."。
+// xmlTagRegexp 匹配 XML 风格标签，用于剥掉 slash command 注入的
+// <command-message>...</command-message> 等标签，保留标签内文本。
+var xmlTagRegexp = regexp.MustCompile(`<[^>]+>`)
+
+// truncateTitle 清理并截断会话标题：
+//  1. 剥掉 XML 标签（如 <command-name>/resume-session</command-name> -> /resume-session）
+//  2. 压缩连续空白（含换行）为单空格
+//  3. 截断到 50 个 rune，超出加 "..."
 func truncateTitle(s string) string {
 	s = strings.TrimSpace(s)
+	// 剥 XML 标签，保留内容（slash command 注入的 <command-name> 等）
+	s = xmlTagRegexp.ReplaceAllString(s, "")
 	// 压缩连续空白（含换行）为单空格
 	s = strings.Join(strings.Fields(s), " ")
 	if s == "" {
