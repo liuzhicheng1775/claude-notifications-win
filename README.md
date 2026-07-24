@@ -1,14 +1,18 @@
 # Claude Notifications Win
 
-适用于 Claude Code 的 Windows 气泡通知插件 | [English](./README_en.md)
+适用于 Claude Code 的任务完成通知提醒插件 - Windows 气泡通知工具 | [English](./README_en.md)
+
+> 让 Claude Code 任务完成时自动弹窗提醒，无需盯着终端，任务结束即时通知。
 
 ---
 
 ## 功能特性
 
-- ✅ **任务完成通知** - Claude Code 完成任务后自动弹窗提醒
+- ✅ **任务完成通知** - Claude Code 完成任务后自动弹窗提醒，无需盯着终端
 - ✅ **权限审批通知** - 需要授权时弹窗提醒
 - ✅ **Windows 原生气泡通知** - 使用 Windows 10/11 原生通知
+- ✅ **飞书通知（可选）** - 同步推送到飞书群机器人，支持加签校验
+- ✅ **多渠道聚合** - Windows + 飞书同时发送，单渠道故障不阻塞其他渠道
 - ✅ **零依赖** - 单文件运行，无需额外运行时
 
 ## 系统要求

@@ -1,16 +1,20 @@
 # Claude Notifications Win
 
-Windows toast notifications for Claude Code hooks.
+Windows toast notification tool for Claude Code - get notified when tasks finish.
 
 [中文](./README.md) | English
+
+> Stop watching the terminal — get an instant pop-up when Claude Code completes a task.
 
 ---
 
 ## Features
 
-- ✅ **Task Complete Notification** - Get notified when Claude Code completes a task
+- ✅ **Task Complete Notification** - Get notified when Claude Code completes a task, no need to watch the terminal
 - ✅ **Permission Prompt Notification** - Get notified when Claude Code needs permission
 - ✅ **Windows Native Toast** - Uses Windows 10/11 native toast notifications
+- ✅ **Feishu Notification (Optional)** - Forward to a Feishu group bot, with HMAC signing
+- ✅ **Multi-Channel Fan-Out** - Windows + Feishu in parallel; one channel failing won't block others
 - ✅ **Zero Dependencies** - Single binary, no runtime required
 
 ## Requirements
