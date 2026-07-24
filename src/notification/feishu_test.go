@@ -32,7 +32,7 @@ func TestFeishuNotifier_SendBasic(t *testing.T) {
 	defer server.Close()
 
 	n := NewFeishuNotifier(server.URL, "")
-	if err := n.Send("标题", "内容"); err != nil {
+	if err := n.Send(Notification{Title: "标题", Message: "内容"}); err != nil {
 		t.Fatalf("Send 返回意外错误: %v", err)
 	}
 
@@ -57,7 +57,7 @@ func TestFeishuNotifier_SendWithSign(t *testing.T) {
 
 	secret := "mysecret"
 	n := NewFeishuNotifier(server.URL, secret)
-	if err := n.Send("标题", "内容"); err != nil {
+	if err := n.Send(Notification{Title: "标题", Message: "内容"}); err != nil {
 		t.Fatalf("Send 返回意外错误: %v", err)
 	}
 
@@ -86,7 +86,7 @@ func TestFeishuNotifier_TitleOrMessageEmpty(t *testing.T) {
 
 	n := NewFeishuNotifier(server.URL, "")
 
-	if err := n.Send("只有标题", ""); err != nil {
+	if err := n.Send(Notification{Title: "只有标题"}); err != nil {
 		t.Fatalf("Send 错误: %v", err)
 	}
 	var req feishuRequest
@@ -95,7 +95,7 @@ func TestFeishuNotifier_TitleOrMessageEmpty(t *testing.T) {
 		t.Errorf("message 空时 text 应为 title, 实际 %q", req.Content.Text)
 	}
 
-	if err := n.Send("", "只有内容"); err != nil {
+	if err := n.Send(Notification{Message: "只有内容"}); err != nil {
 		t.Fatalf("Send 错误: %v", err)
 	}
 	json.Unmarshal([]byte(*lastBody), &req)
@@ -109,7 +109,7 @@ func TestFeishuNotifier_NonZeroCode(t *testing.T) {
 	defer server.Close()
 
 	n := NewFeishuNotifier(server.URL, "")
-	err := n.Send("标题", "内容")
+	err := n.Send(Notification{Title: "标题", Message: "内容"})
 	if err == nil {
 		t.Fatal("code!=0 期望返回错误")
 	}
@@ -127,11 +127,83 @@ func TestFeishuNotifier_NetworkError(t *testing.T) {
 	server.Close() // 关闭使 URL 不可达
 
 	n := NewFeishuNotifier(addr, "")
-	err := n.Send("标题", "内容")
+	err := n.Send(Notification{Title: "标题", Message: "内容"})
 	if err == nil {
 		t.Fatal("网络不可达应返回错误")
 	}
 	if !strings.Contains(err.Error(), "feishu request") {
 		t.Errorf("错误应包含 feishu request, 实际: %v", err)
+	}
+}
+
+// --- buildFeishuText 纯函数测试 ---
+
+func TestBuildFeishuText_Basic(t *testing.T) {
+	got := buildFeishuText(Notification{Title: "标题", Message: "内容"})
+	want := "标题\n内容"
+	if got != want {
+		t.Errorf("期望 %q, 实际 %q", want, got)
+	}
+}
+
+func TestBuildFeishuText_NoSession(t *testing.T) {
+	// 无 session 字段时不应追加会话块（test 命令发的通知）
+	got := buildFeishuText(Notification{Title: "Claude Code", Message: "通知测试"})
+	if strings.Contains(got, "会话:") {
+		t.Errorf("无 session 时不应含会话块, 实际 %q", got)
+	}
+	if strings.Contains(got, "ID:") {
+		t.Errorf("无 session 时不应含 ID 块, 实际 %q", got)
+	}
+}
+
+func TestBuildFeishuText_WithSession(t *testing.T) {
+	got := buildFeishuText(Notification{
+		Title:        "Claude Code",
+		Message:      "任务已完成",
+		SessionID:    "230c9a65-b2f7-4848-bc52-464070178d6e",
+		SessionTitle: "实现飞书通知带会话信息",
+	})
+	if !strings.Contains(got, "Claude Code\n任务已完成") {
+		t.Errorf("应含 title+message, 实际 %q", got)
+	}
+	if !strings.Contains(got, "会话: 实现飞书通知带会话信息") {
+		t.Errorf("应含会话标题, 实际 %q", got)
+	}
+	if !strings.Contains(got, "ID: 230c9a65") {
+		t.Errorf("应含截断的 session id, 实际 %q", got)
+	}
+}
+
+func TestBuildFeishuText_SessionIDTruncated(t *testing.T) {
+	// 完整 UUID 36 字符应截到前 8 位
+	longID := "230c9a65-b2f7-4848-bc52-464070178d6e"
+	got := buildFeishuText(Notification{SessionID: longID})
+	if !strings.HasSuffix(got, "ID: 230c9a65") {
+		t.Errorf("session id 应截到前 8 位, 实际 %q", got)
+	}
+	// 短 ID 不截断
+	shortID := "abc123"
+	got = buildFeishuText(Notification{SessionID: shortID})
+	if !strings.HasSuffix(got, "ID: abc123") {
+		t.Errorf("短 id 不应截断, 实际 %q", got)
+	}
+}
+
+func TestBuildFeishuText_SessionTitleOnly(t *testing.T) {
+	// 只有标题无 ID
+	got := buildFeishuText(Notification{Title: "T", Message: "M", SessionTitle: "我的会话"})
+	if strings.Contains(got, "ID:") {
+		t.Errorf("无 session id 时不应含 ID 行, 实际 %q", got)
+	}
+	if !strings.Contains(got, "会话: 我的会话") {
+		t.Errorf("应含会话标题, 实际 %q", got)
+	}
+}
+
+func TestBuildFeishuText_Empty(t *testing.T) {
+	got := buildFeishuText(Notification{})
+	if got != "" {
+		t.Errorf("全空 Notification 应返回空字符串, 实际 %q", got)
 	}
 }

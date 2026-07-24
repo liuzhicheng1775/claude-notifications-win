@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -46,14 +47,10 @@ type feishuResponse struct {
 }
 
 // Send 向飞书 webhook 发送 text 消息。
-// title 和 message 同时非空时合并为 "title\nmessage"，否则发送非空的那个。
-func (n *FeishuNotifier) Send(title, message string) error {
-	text := message
-	if title != "" && message != "" {
-		text = title + "\n" + message
-	} else if title != "" {
-		text = title
-	}
+// 消息文本由 buildFeishuText 构造，会附带会话 ID（前 8 位）
+// 和会话标题（前 50 字符）- 仅当 SessionID/SessionTitle 非空时追加。
+func (n *FeishuNotifier) Send(noti Notification) error {
+	text := buildFeishuText(noti)
 
 	req := feishuRequest{
 		MsgType: "text",
@@ -90,6 +87,48 @@ func (n *FeishuNotifier) Send(title, message string) error {
 		return fmt.Errorf("feishu send failed: code=%d msg=%s", fr.Code, fr.Msg)
 	}
 	return nil
+}
+
+// buildFeishuText 构造飞书消息文本。
+// 格式:
+//
+//	<title>
+//	<message>
+//
+//	会话: <标题前 50 字符>...
+//	ID: <session_id 前 8 位>
+//
+// SessionID 和 SessionTitle 都为空时不追加会话信息块，
+// test 命令发的测试通知不会带会话信息。
+func buildFeishuText(n Notification) string {
+	var sb strings.Builder
+	if n.Title != "" {
+		sb.WriteString(n.Title)
+	}
+	if n.Message != "" {
+		if sb.Len() > 0 {
+			sb.WriteByte('\n')
+		}
+		sb.WriteString(n.Message)
+	}
+	// 仅当存在会话上下文时追加
+	if n.SessionID != "" || n.SessionTitle != "" {
+		if sb.Len() > 0 {
+			sb.WriteString("\n\n")
+		}
+		if n.SessionTitle != "" {
+			sb.WriteString("会话: " + n.SessionTitle + "\n")
+		}
+		if n.SessionID != "" {
+			sid := n.SessionID
+			// UUID 形如 230c9a65-b2f7-4848-bc52-464070178d6e，取前 8 位足够区分
+			if len(sid) > 8 {
+				sid = sid[:8]
+			}
+			sb.WriteString("ID: " + sid)
+		}
+	}
+	return sb.String()
 }
 
 // sign 计算飞书加签：base64(hmac_sha256(key=timestamp+"\n"+secret, message=""))。

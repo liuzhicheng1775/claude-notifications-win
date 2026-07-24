@@ -23,7 +23,10 @@ func RunTest() error {
 
 	// Windows 通知（始终测试）
 	w := notification.NewWindowsNotifier()
-	results = append(results, result{"Windows", w.Send("Claude Code", "通知测试")})
+	results = append(results, result{"Windows", w.Send(notification.Notification{
+		Title:   "Claude Code",
+		Message: "通知测试",
+	})})
 
 	// 飞书（启用且 webhook 非空才测试）
 	if cfg != nil && cfg.Notifications.Feishu.Enabled && cfg.Notifications.Feishu.Webhook != "" {
@@ -31,7 +34,10 @@ func RunTest() error {
 			cfg.Notifications.Feishu.Webhook,
 			cfg.Notifications.Feishu.Secret,
 		)
-		results = append(results, result{"飞书", f.Send("Claude Code", "通知测试")})
+		results = append(results, result{"飞书", f.Send(notification.Notification{
+			Title:   "Claude Code",
+			Message: "通知测试",
+		})})
 	}
 
 	success := 0

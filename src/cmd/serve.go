@@ -6,152 +6,236 @@ import (
 	"claude-notifications-win/src/hooks"
 	"claude-notifications-win/src/notification"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
 )
 
+// ClaudeHookPayload 对应 Claude Code 通过 stdin 传给 hook 的 JSON。
+// 字段名来自官方文档（https://docs.claude.com/en/docs/claude-code/hooks）。
+// Stop hook 传 session_id/transcript_path/cwd/hook_event_name/stop_hook_active；
+// Notification hook 额外传 message/title/notification_type。
 type ClaudeHookPayload struct {
-	Type      string `json:"type"`
-	Subject   string `json:"subject"`
-	StopType  string `json:"stopType,omitempty"`
-	Reason    string `json:"reason,omitempty"`
+	HookEventName    string `json:"hook_event_name"`
+	SessionID        string `json:"session_id"`
+	TranscriptPath   string `json:"transcript_path"`
+	Cwd              string `json:"cwd,omitempty"`
+	StopHookActive   bool   `json:"stop_hook_active,omitempty"`
+	Message          string `json:"message,omitempty"`
+	Title            string `json:"title,omitempty"`
+	NotificationType string `json:"notification_type,omitempty"`
 }
 
+// HandleStopHook 处理 Stop hook：解析 stdin payload，提取会话信息，发通知。
+// 解析失败或 stdin 为空时仍发默认通知（不阻塞 Claude Code 流程）。
 func HandleStopHook() error {
 	cfg, err := config.Load()
-	if err != nil {
+	if err != nil || cfg == nil {
 		cfg = &config.Config{}
 	}
 
 	notifier := BuildNotifier(cfg)
 	handler := hooks.NewStopHandler(notifier, cfg)
 
-	// Get optional reason from args
-	reason := getFlag("--reason")
+	payload, err := readPayload()
+	if err != nil {
+		// 解析失败仍发通知，用默认消息
+		return handler.Handle(notification.Notification{
+			Title:   "Claude Code",
+			Message: "任务已完成",
+		})
+	}
 
-	// Read from stdin for task info from Claude Code
-	taskName := readStdin()
+	// 会话标题从 transcript 第一条 user message 推导；
+	// 同时用作通知 message（让用户在通知里直接看到会话主题）
+	var sessionTitle string
+	if payload.TranscriptPath != "" {
+		sessionTitle = extractSessionTitle(payload.TranscriptPath)
+	}
+	message := "任务已完成"
+	if sessionTitle != "" {
+		message = sessionTitle
+	}
 
-	return handler.Handle(reason, taskName)
+	return handler.Handle(notification.Notification{
+		Title:        "Claude Code",
+		Message:      message,
+		SessionID:    payload.SessionID,
+		SessionTitle: sessionTitle,
+	})
 }
 
+// HandlePermissionHook 处理 Notification hook（permission_prompt）。
+// 优先用 payload.Message 作为提示文本，fallback 到默认。
 func HandlePermissionHook() error {
 	cfg, err := config.Load()
-	if err != nil {
+	if err != nil || cfg == nil {
 		cfg = &config.Config{}
 	}
 
 	notifier := BuildNotifier(cfg)
 	handler := hooks.NewPermissionHandler(notifier, cfg)
 
-	// Get prompt from args
-	prompt := getFlag("--prompt")
+	payload, err := readPayload()
+	if err != nil {
+		return handler.Handle(notification.Notification{
+			Title:   "Claude Code - 需要授权",
+			Message: "请授权以继续操作",
+		})
+	}
 
-	// Read from stdin for additional context
-	context := readStdin()
+	message := payload.Message
+	if message == "" {
+		message = "请授权以继续操作"
+	}
 
-	return handler.Handle(prompt, context)
+	var sessionTitle string
+	if payload.TranscriptPath != "" {
+		sessionTitle = extractSessionTitle(payload.TranscriptPath)
+	}
+
+	return handler.Handle(notification.Notification{
+		Title:        "Claude Code - 需要授权",
+		Message:      message,
+		SessionID:    payload.SessionID,
+		SessionTitle: sessionTitle,
+	})
 }
 
-func readStdin() string {
-	// Check if stdin has data
+// readPayload 从 stdin 读取 Claude Code hook JSON payload。
+// stdin 为空（终端直跑）时返回空 payload 与 nil error。
+// 非 JSON 输入返回错误（hook 配置异常时也能感知）。
+func readPayload() (*ClaudeHookPayload, error) {
 	stat, _ := os.Stdin.Stat()
-	if (stat.Mode() & os.ModeCharDevice) == 0 {
-		reader := bufio.NewReader(os.Stdin)
-		var sb strings.Builder
-		scanner := bufio.NewScanner(reader)
-		for scanner.Scan() {
-			sb.Write(scanner.Bytes())
-			sb.WriteByte('\n')
-		}
-		input := strings.TrimSpace(sb.String())
-		if input != "" {
-			// Try to parse as JSON first
-			var payload ClaudeHookPayload
-			if err := json.Unmarshal([]byte(input), &payload); err == nil {
-				if payload.Subject != "" {
-					return extractTaskName(payload.Subject)
-				}
-				if payload.Reason != "" {
-					return payload.Reason
-				}
-				// Valid JSON but no useful content - return empty to skip notification
-				return ""
-			}
-			// Return raw input if not JSON, but filter out session-like garbage
-			return filterGarbage(input)
-		}
+	// 没有管道输入（终端直接运行）时返回空 payload
+	if (stat.Mode() & os.ModeCharDevice) != 0 {
+		return &ClaudeHookPayload{}, nil
 	}
-	return ""
+
+	data, err := ioutil.ReadAll(os.Stdin)
+	if err != nil {
+		return nil, fmt.Errorf("read stdin: %w", err)
+	}
+	trimmed := strings.TrimSpace(string(data))
+	if trimmed == "" {
+		return &ClaudeHookPayload{}, nil
+	}
+
+	var payload ClaudeHookPayload
+	if err := json.Unmarshal([]byte(trimmed), &payload); err != nil {
+		return nil, fmt.Errorf("parse hook payload: %w", err)
+	}
+	return &payload, nil
 }
 
-// filterGarbage removes unwanted noise from raw input
-func filterGarbage(input string) string {
-	// If input looks like session ID garbage, return empty
-	if strings.Contains(input, "session id") || strings.Contains(input, "session") {
-		// Check if it's mostly session garbage
-		lines := strings.Split(input, "\n")
-		if len(lines) > 0 && strings.Contains(lines[0], "session") {
-			return ""
-		}
-	}
-	// If input is mostly JSON-like garbage, return empty
-	if strings.HasPrefix(strings.TrimSpace(input), "{") && strings.Contains(input, "\"session") {
+// extractSessionTitle 从 transcript jsonl 文件提取会话标题。
+// 找第一条 type:"user" 且非 tool_result 的消息，取文本前 50 字符 + "..."。
+// 文件不存在/解析失败/找不到 user 消息 -> 返回空字符串（不阻塞通知）。
+//
+// transcript jsonl 每行是一个 JSON 对象，user message 的 content 可能是：
+//   - string 形式：{"content": "文本"}
+//   - array 形式：{"content": [{"type":"text","text":"..."}, {"type":"tool_result",...}]}
+//
+// 第一行通常是 file-history-snapshot，要跳过。
+// tool_result block 不是真正的用户输入，也要跳过。
+func extractSessionTitle(transcriptPath string) string {
+	if transcriptPath == "" {
 		return ""
 	}
-	return input
-}
+	f, err := os.Open(transcriptPath)
+	if err != nil {
+		return ""
+	}
+	defer f.Close()
 
-// extractTaskName extracts the meaningful task name from a potentially noisy subject string
-func extractTaskName(subject string) string {
-	// Pattern: "[会话:xxx] ... - 任务：xxx" or "xxx - 任务：xxx"
-	// Extract the part after " - 任务：" or just after " - " if it looks like a task
-	if idx := strings.LastIndex(subject, " - 任务："); idx != -1 {
-		return subject[idx+len(" - 任务："):]
-	}
-	if idx := strings.LastIndex(subject, "- 任务："); idx != -1 {
-		return subject[idx+len("- 任务："):]
-	}
-	// If no clear task marker, try to find "任务：" anywhere
-	if idx := strings.Index(subject, "任务："); idx != -1 {
-		return subject[idx+len("任务："):]
-	}
-	// If subject starts with session pattern, try to extract after ]
-	// Pattern: "[会话:xxx] xxx" or "[会话 xxx] xxx"
-	if idx := strings.Index(subject, "]"); idx != -1 && idx < len(subject)-1 {
-		return strings.TrimSpace(subject[idx+1:])
-	}
-	// Return cleaned subject, removing leading brackets/prefixes
-	return strings.TrimSpace(subject)
-}
+	// jsonl 单行可能含 base64 图片等，缓冲区扩到 10MB
+	scanner := bufio.NewScanner(f)
+	scanner.Buffer(make([]byte, 64*1024), 10*1024*1024)
 
-func getFlag(name string) string {
-	for i, arg := range os.Args {
-		if strings.HasPrefix(arg, name+"=") {
-			return strings.TrimPrefix(arg, name+"=")
+	linesScanned := 0
+	for scanner.Scan() {
+		linesScanned++
+		// 限制扫描行数避免大文件
+		if linesScanned > 100 {
+			break
 		}
-		if arg == name && i+1 < len(os.Args) {
-			return os.Args[i+1]
+		line := scanner.Bytes()
+		if len(line) == 0 {
+			continue
+		}
+
+		var entry struct {
+			Type    string          `json:"type"`
+			Message json.RawMessage `json:"message"`
+		}
+		if err := json.Unmarshal(line, &entry); err != nil {
+			continue
+		}
+		if entry.Type != "user" {
+			continue
+		}
+
+		text := extractUserText(entry.Message)
+		if text == "" {
+			continue
+		}
+		return truncateTitle(text)
+	}
+	return ""
+}
+
+// extractUserText 从 user message 的 message 字段提取文本。
+// message 字段结构: {"role":"user","content": <string | []block>}
+// 跳过 tool_result block（不是真正用户输入）。
+func extractUserText(messageRaw json.RawMessage) string {
+	if len(messageRaw) == 0 {
+		return ""
+	}
+
+	var msg struct {
+		Role    string          `json:"role"`
+		Content json.RawMessage `json:"content"`
+	}
+	if err := json.Unmarshal(messageRaw, &msg); err != nil {
+		return ""
+	}
+
+	// 尝试 string 形式
+	var s string
+	if err := json.Unmarshal(msg.Content, &s); err == nil {
+		return strings.TrimSpace(s)
+	}
+
+	// 尝试 array of blocks 形式
+	var blocks []struct {
+		Type string `json:"type"`
+		Text string `json:"text"`
+	}
+	if err := json.Unmarshal(msg.Content, &blocks); err == nil {
+		for _, b := range blocks {
+			// 跳过 tool_result，只取 text block
+			if b.Type == "text" && strings.TrimSpace(b.Text) != "" {
+				return strings.TrimSpace(b.Text)
+			}
 		}
 	}
 	return ""
 }
 
-func getAllArgs() []string {
-	// Get all args after command name
-	if len(os.Args) < 3 {
-		return []string{}
+// truncateTitle 压缩空白并截断到 50 个 rune，超出加 "..."。
+func truncateTitle(s string) string {
+	s = strings.TrimSpace(s)
+	// 压缩连续空白（含换行）为单空格
+	s = strings.Join(strings.Fields(s), " ")
+	if s == "" {
+		return ""
 	}
-	return os.Args[2:]
-}
-
-func extractArg(prefix string) string {
-	for _, arg := range getAllArgs() {
-		if strings.HasPrefix(arg, prefix) {
-			return strings.TrimPrefix(arg, prefix+"=")
-		}
+	runes := []rune(s)
+	if len(runes) <= 50 {
+		return s
 	}
-	return ""
+	return string(runes[:50]) + "..."
 }
 
 // BuildNotifier 根据配置组装通知器。

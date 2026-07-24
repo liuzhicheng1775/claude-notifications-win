@@ -18,11 +18,11 @@ func NewMultiNotifier(notifiers ...Notifier) *MultiNotifier {
 }
 
 // Send 依次向每个 notifier 发送，收集错误。
-func (n *MultiNotifier) Send(title, message string) error {
+func (n *MultiNotifier) Send(noti Notification) error {
 	var errs []string
 	success := 0
 	for _, not := range n.notifiers {
-		if err := not.Send(title, message); err != nil {
+		if err := not.Send(noti); err != nil {
 			errs = append(errs, err.Error())
 			continue
 		}

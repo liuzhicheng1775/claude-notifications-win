@@ -10,11 +10,13 @@ func NewWindowsNotifier() *WindowsNotifier {
 	return &WindowsNotifier{}
 }
 
-func (n *WindowsNotifier) Send(title, message string) error {
-	notification := toast.Notification{
+// Send 弹出 Windows toast 通知。
+// 只使用 Title 和 Message，忽略会话字段（toast 文本保持简洁）。
+func (n *WindowsNotifier) Send(noti Notification) error {
+	t := toast.Notification{
 		AppID:   "Claude Code",
-		Title:   title,
-		Message: message,
+		Title:   noti.Title,
+		Message: noti.Message,
 	}
-	return notification.Push()
+	return t.Push()
 }

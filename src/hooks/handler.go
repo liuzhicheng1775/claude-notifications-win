@@ -5,10 +5,12 @@ import (
 	"claude-notifications-win/src/notification"
 )
 
+// Handler 抽象 hook 处理器，接收已构造好的 Notification 并转发给 notifier。
 type Handler interface {
-	Handle(reason string, taskName string) error
+	Handle(n notification.Notification) error
 }
 
+// StopHandler 处理 Claude Code Stop hook（任务完成）。
 type StopHandler struct {
 	notifier notification.Notifier
 	config   *config.Config
@@ -21,23 +23,23 @@ func NewStopHandler(notifier notification.Notifier, cfg *config.Config) *StopHan
 	}
 }
 
-func (h *StopHandler) Handle(reason string, taskName string) error {
-	title := "Claude Code"
-	if taskName != "" {
-		// Truncate long task names
-		if len(taskName) > 50 {
-			taskName = taskName[:47] + "..."
-		}
-		message := taskName
-		return h.notifier.Send(title, message)
+// Handle 直接转发 Notification 给 notifier。
+// serve.go 负责 payload 解析、构造 Notification（含会话信息提取）。
+func (h *StopHandler) Handle(n notification.Notification) error {
+	// 截断过长的 message，避免飞书消息爆炸
+	if len(n.Message) > 200 {
+		n.Message = n.Message[:197] + "..."
 	}
-	message := "任务已完成"
-	if reason != "" {
-		message = reason
+	if n.Message == "" {
+		n.Message = "任务已完成"
 	}
-	return h.notifier.Send(title, message)
+	if n.Title == "" {
+		n.Title = "Claude Code"
+	}
+	return h.notifier.Send(n)
 }
 
+// PermissionHandler 处理 Claude Code Notification hook（permission_prompt）。
 type PermissionHandler struct {
 	notifier notification.Notifier
 	config   *config.Config
@@ -50,18 +52,17 @@ func NewPermissionHandler(notifier notification.Notifier, cfg *config.Config) *P
 	}
 }
 
-func (h *PermissionHandler) Handle(prompt string, context string) error {
-	title := "Claude Code - 需要授权"
-	message := "请授权以继续操作"
-	if prompt != "" {
-		// Truncate long prompts
-		if len(prompt) > 100 {
-			prompt = prompt[:97] + "..."
-		}
-		message = prompt
+// Handle 转发授权请求通知。message 为空时使用默认提示。
+func (h *PermissionHandler) Handle(n notification.Notification) error {
+	if n.Title == "" {
+		n.Title = "Claude Code - 需要授权"
 	}
-	if context != "" && context != prompt {
-		message = context + "\n\n" + message
+	if n.Message == "" {
+		n.Message = "请授权以继续操作"
 	}
-	return h.notifier.Send(title, message)
+	// 截断过长的 message
+	if len(n.Message) > 200 {
+		n.Message = n.Message[:197] + "..."
+	}
+	return h.notifier.Send(n)
 }
