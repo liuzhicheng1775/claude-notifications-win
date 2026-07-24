@@ -33,6 +33,16 @@ func main() {
 			fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 			os.Exit(1)
 		}
+	case "init":
+		if err := cmd.RunInit(); err != nil {
+			fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
+			os.Exit(1)
+		}
+	case "test":
+		if err := cmd.RunTest(); err != nil {
+			fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
+			os.Exit(1)
+		}
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", cmdName)
 		printUsage()
@@ -46,4 +56,6 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "  version    Show version")
 	fmt.Fprintln(os.Stderr, "  stop       Handle task completion notification")
 	fmt.Fprintln(os.Stderr, "  permission Handle permission prompt notification")
+	fmt.Fprintln(os.Stderr, "  init       Interactive setup wizard")
+	fmt.Fprintln(os.Stderr, "  test       Test all notification channels")
 }

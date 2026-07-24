@@ -20,11 +20,35 @@
 
 ---
 
-## 二、配置 config.json
+## 二、一键配置（推荐）
+
+拿到 webhook 和 secret 后，直接运行向导：
+
+```bash
+notify.exe init
+```
+
+向导交互流程：
+
+1. `是否配置飞书通知？(y/n)` → 输入 `y`
+2. `请输入飞书 webhook URL:` → 粘贴 webhook
+3. `请输入加签 secret（可选，回车跳过）:` → 粘贴 secret（没开加签就回车）
+4. 向导自动写 `config.json` + 自动配 `~/.claude/settings.json` hooks
+5. `是否立即发送测试通知？(y/n)` → 输入 `y` 验证
+
+看到 `2/2 渠道成功`（Windows + 飞书都 ✓）即配置完成。重启 Claude Code 生效。
+
+> `init` 会自适应 `notify.exe` 的实际路径，换机器/移动目录不失效。重复运行不会产生重复 hooks。
+
+---
+
+## 三、手动配置（不走向导）
+
+### 1. 写 config.json
 
 在 `notify.exe` 同目录下创建 `config.json`（已有则编辑）。
 
-### 仅飞书（不开加签）
+**仅飞书（不开加签）**
 
 ```json
 {
@@ -40,7 +64,7 @@
 }
 ```
 
-### 飞书 + 加签（推荐）
+**飞书 + 加签（推荐）**
 
 ```json
 {
@@ -56,7 +80,7 @@
 }
 ```
 
-### 字段说明
+**字段说明**
 
 | 字段 | 说明 |
 |------|------|
@@ -66,9 +90,7 @@
 
 > 不配置整个 `feishu` 字段时，只弹 Windows 气泡通知，行为和升级前一样。
 
----
-
-## 三、配置 Claude Code hooks
+### 2. 配置 Claude Code hooks
 
 编辑 `~/.claude/settings.json`（Windows 路径：`C:\Users\你的用户名\.claude\settings.json`）：
 
@@ -98,9 +120,23 @@
 
 ## 四、验证
 
-### 手动测试（立即看效果）
+### 用 test 命令一键测试（推荐）
 
-打开 cmd 或 PowerShell，执行：
+```bash
+notify.exe test
+```
+
+会向 Windows 通知和已启用的飞书分别发一条测试消息，并汇总：
+
+```
+通知渠道测试：
+  ✓ Windows
+  ✓ 飞书
+
+2/2 渠道成功
+```
+
+### 手动测试单个 hook
 
 ```bash
 notify.exe stop
@@ -108,8 +144,6 @@ notify.exe stop
 
 - Windows 应弹出气泡通知
 - 飞书群应收到机器人消息：「Claude Code / 任务已完成」
-
-测试权限通知：
 
 ```bash
 notify.exe permission
@@ -132,8 +166,9 @@ notify.exe permission
 | 飞书报 `19021` 等错误码 | webhook URL 错误，或机器人被删了。重新创建机器人 |
 | 两个都没收到 | 检查 `notify.exe` 路径和 `settings.json` 配置 |
 | Windows 弹了但飞书超时 | 网络问题（需能访问 `open.feishu.cn`），或机器人设置了 IP 白名单 |
+| 任务完成不推送 | `~/.claude/settings.json` 缺少 Stop hook，重新跑 `notify.exe init` |
 
-查看具体错误：在终端直接运行 `notify.exe stop`，错误会打印到 stderr。
+查看具体错误：在终端直接运行 `notify.exe stop` 或 `notify.exe test`，错误会打印到 stderr。
 
 ---
 
@@ -141,8 +176,8 @@ notify.exe permission
 
 `config.json` 按以下顺序查找（找到第一个就用）：
 
-1. `%LOCALAPPDATA%\claude-notifications-win\config.json`
+1. `%LOCALAPPDATA%\claude-notifications-win\config.json`（`init` 向导默认写这里）
 2. `%APPDATA%\claude-notifications-win\config.json`
 3. `notify.exe` 同目录下的 `config.json`
 
-推荐放 `notify.exe` 同目录（第 3 个位置），最直观。
+`init` 向导默认写到第 1 个位置。手动配置可放任一位置，第 3 个最直观。

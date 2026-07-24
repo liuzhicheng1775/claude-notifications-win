@@ -27,35 +27,19 @@ Windows toast notification tool for Claude Code - get notified when tasks finish
 ### Option 1: Manual Installation (Recommended)
 
 1. Download the latest `notify.exe` from [Releases](https://github.com/liuzhicheng1775/claude-notifications-win/releases)
-2. Create `config.json` in the same directory as `notify.exe` (optional, defaults to all enabled):
-   ```json
-   {
-     "notifications": {
-       "stop": { "enabled": true },
-       "permission": { "enabled": true }
-     }
-   }
+2. Run the one-click setup wizard:
+   ```bash
+   notify.exe init
    ```
-3. Configure hooks in `~/.claude/settings.json`:
-   ```json
-   {
-     "hooks": {
-       "Stop": [{
-         "hooks": [{
-           "type": "command",
-           "command": "C:/path/to/notify.exe stop"
-         }]
-       }],
-       "Notification": [{
-         "matcher": "permission_prompt",
-         "hooks": [{
-           "type": "command",
-           "command": "C:/path/to/notify.exe permission"
-         }]
-       }]
-     }
-   }
-   ```
+   The wizard interactively walks you through everything:
+   - Configure Feishu notifications (optional, press Enter to skip)
+   - Automatically writes `config.json`
+   - Automatically writes Stop / Notification hooks to `~/.claude/settings.json` (skips if already present, no duplicates)
+   - Optionally sends a test notification right away
+
+3. Restart Claude Code to take effect.
+
+> `init` auto-detects the actual path of `notify.exe`, so it survives moving directories or switching machines. Re-run `init` to change config, or edit `config.json` directly.
 
 ### Option 2: Claude Code Plugin
 
@@ -76,18 +60,70 @@ Windows toast notification tool for Claude Code - get notified when tasks finish
 
 3. Restart Claude Code
 
+### Option 3: Manual Configuration (without the wizard)
+
+If you prefer not to use the `init` wizard, you can configure manually:
+
+1. Create `config.json` in the same directory as `notify.exe` (optional, defaults to all enabled):
+   ```json
+   {
+     "notifications": {
+       "stop": { "enabled": true },
+       "permission": { "enabled": true }
+     }
+   }
+   ```
+2. Configure hooks in `~/.claude/settings.json`:
+   ```json
+   {
+     "hooks": {
+       "Stop": [{
+         "hooks": [{
+           "type": "command",
+           "command": "C:/path/to/notify.exe stop"
+         }]
+       }],
+       "Notification": [{
+         "matcher": "permission_prompt",
+         "hooks": [{
+           "type": "command",
+           "command": "C:/path/to/notify.exe permission"
+         }]
+       }]
+     }
+   }
+   ```
+
+## Commands
+
+| Command | Purpose |
+|---------|---------|
+| `notify.exe init` | Interactive setup wizard (Feishu + config.json + hooks in one shot) |
+| `notify.exe test` | Send a test message to all enabled channels, report ✓/✗ per channel |
+| `notify.exe stop` | Trigger task-complete notification (called by Claude Code Stop hook) |
+| `notify.exe permission` | Trigger permission-prompt notification (called by Claude Code Notification hook) |
+| `notify.exe version` | Show version |
+
 ## Usage
 
-After installation, notifications will automatically appear:
+After installation and configuration, notifications appear automatically:
 
 | Notification Type | Trigger |
 |-------------------|---------|
 | Task Complete | When Claude Code finishes a task |
 | Permission Required | When Claude Code needs your approval |
 
+Verify your setup:
+
+```bash
+notify.exe test
+```
+
+Sends a test message to Windows toast and any enabled Feishu channel, then prints an `N/M channels succeeded` summary.
+
 ## Feishu Notification (Optional)
 
-> See [docs/feishu-notification.md](./docs/feishu-notification.md) for detailed setup steps.
+> Recommended: use the `notify.exe init` wizard. Below is the manual configuration reference. See [docs/feishu-notification.md](./docs/feishu-notification.md) for detailed steps.
 
 In addition to Windows toast, notifications can be sent to a Feishu group. Create a custom bot in your Feishu group, obtain the webhook URL (and secret if signature verification is enabled), and add it to `config.json`:
 
