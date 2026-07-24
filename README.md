@@ -79,6 +79,24 @@
 | 任务完成 | Claude Code 完成一个任务 |
 | 需要权限 | Claude Code 需要您授权操作 |
 
+## 飞书通知（可选）
+
+除 Windows 气泡通知外，还支持将通知发送到飞书群。在飞书群创建自定义机器人，获取 webhook URL（若开启了签名校验，还需 secret），填入 `config.json`：
+
+```json
+{
+  "notifications": {
+    "feishu": {
+      "enabled": true,
+      "webhook": "https://open.feishu.cn/open-apis/bot/v2/hook/你的hook_id",
+      "secret": "可选，机器人开启签名校验时填写"
+    }
+  }
+}
+```
+
+`enabled: true` 且 `webhook` 非空时，通知会同时发送到 Windows 通知和飞书群。不配置 `feishu` 字段时仅使用 Windows 通知。
+
 ## 开发
 
 ### 从源码构建

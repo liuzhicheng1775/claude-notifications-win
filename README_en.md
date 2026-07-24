@@ -81,6 +81,24 @@ After installation, notifications will automatically appear:
 | Task Complete | When Claude Code finishes a task |
 | Permission Required | When Claude Code needs your approval |
 
+## Feishu Notification (Optional)
+
+In addition to Windows toast, notifications can be sent to a Feishu group. Create a custom bot in your Feishu group, obtain the webhook URL (and secret if signature verification is enabled), and add it to `config.json`:
+
+```json
+{
+  "notifications": {
+    "feishu": {
+      "enabled": true,
+      "webhook": "https://open.feishu.cn/open-apis/bot/v2/hook/your_hook_id",
+      "secret": "optional, required only if bot signature verification is enabled"
+    }
+  }
+}
+```
+
+When `enabled: true` and `webhook` is non-empty, notifications are sent to both Windows toast and the Feishu group. Without the `feishu` field, only Windows toast is used.
+
 ## Development
 
 ### Building from Source

@@ -65,6 +65,29 @@ func TestLoad_DefaultsWhenMissing(t *testing.T) {
 	if !cfg.Notifications.Permission.Enabled {
 		t.Errorf("默认 Permission.Enabled 期望 true, 实际 false")
 	}
+	if cfg.Notifications.Feishu.Enabled {
+		t.Errorf("默认 Feishu.Enabled 期望 false, 实际 true")
+	}
+}
+
+func TestLoad_FeishuConfig(t *testing.T) {
+	cfgDir, cleanup := setupConfigEnv(t)
+	defer cleanup()
+	writeConfig(t, cfgDir, `{"notifications":{"feishu":{"enabled":true,"webhook":"https://example.com/hook","secret":"sec"}}}`)
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() 返回意外错误: %v", err)
+	}
+	if !cfg.Notifications.Feishu.Enabled {
+		t.Errorf("Feishu.Enabled 期望 true, 实际 false")
+	}
+	if cfg.Notifications.Feishu.Webhook != "https://example.com/hook" {
+		t.Errorf("Feishu.Webhook 期望 https://example.com/hook, 实际 %q", cfg.Notifications.Feishu.Webhook)
+	}
+	if cfg.Notifications.Feishu.Secret != "sec" {
+		t.Errorf("Feishu.Secret 期望 sec, 实际 %q", cfg.Notifications.Feishu.Secret)
+	}
 }
 
 func TestLoad_ValidConfig(t *testing.T) {

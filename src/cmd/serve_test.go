@@ -4,6 +4,9 @@ import (
 	"os"
 	"reflect"
 	"testing"
+
+	"claude-notifications-win/src/config"
+	"claude-notifications-win/src/notification"
 )
 
 // withArgs 临时替换 os.Args 并在测试结束后恢复。
@@ -136,5 +139,40 @@ func TestExtractArg(t *testing.T) {
 				t.Errorf("extractArg(%q) = %q, want %q", c.prefix, got, c.want)
 			}
 		})
+	}
+}
+
+func TestBuildNotifier_WindowsOnly(t *testing.T) {
+	cfg := &config.Config{}
+	n := BuildNotifier(cfg)
+	if _, ok := n.(*notification.WindowsNotifier); !ok {
+		t.Errorf("飞书未启用时期望 *WindowsNotifier, 实际 %T", n)
+	}
+}
+
+func TestBuildNotifier_WithFeishu(t *testing.T) {
+	cfg := &config.Config{}
+	cfg.Notifications.Feishu.Enabled = true
+	cfg.Notifications.Feishu.Webhook = "https://open.feishu.cn/open-apis/bot/v2/hook/test"
+	n := BuildNotifier(cfg)
+	if _, ok := n.(*notification.MultiNotifier); !ok {
+		t.Errorf("飞书启用时期望 *MultiNotifier, 实际 %T", n)
+	}
+}
+
+func TestBuildNotifier_FeishuEnabledButNoWebhook(t *testing.T) {
+	cfg := &config.Config{}
+	cfg.Notifications.Feishu.Enabled = true
+	// webhook 为空，不应启用飞书
+	n := BuildNotifier(cfg)
+	if _, ok := n.(*notification.WindowsNotifier); !ok {
+		t.Errorf("webhook 空时应只返回 Windows, 实际 %T", n)
+	}
+}
+
+func TestBuildNotifier_NilConfig(t *testing.T) {
+	n := BuildNotifier(nil)
+	if _, ok := n.(*notification.WindowsNotifier); !ok {
+		t.Errorf("nil cfg 应只返回 Windows, 实际 %T", n)
 	}
 }

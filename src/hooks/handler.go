@@ -10,11 +10,11 @@ type Handler interface {
 }
 
 type StopHandler struct {
-	notifier *notification.WindowsNotifier
+	notifier notification.Notifier
 	config   *config.Config
 }
 
-func NewStopHandler(notifier *notification.WindowsNotifier, cfg *config.Config) *StopHandler {
+func NewStopHandler(notifier notification.Notifier, cfg *config.Config) *StopHandler {
 	return &StopHandler{
 		notifier: notifier,
 		config:   cfg,
@@ -39,11 +39,11 @@ func (h *StopHandler) Handle(reason string, taskName string) error {
 }
 
 type PermissionHandler struct {
-	notifier *notification.WindowsNotifier
+	notifier notification.Notifier
 	config   *config.Config
 }
 
-func NewPermissionHandler(notifier *notification.WindowsNotifier, cfg *config.Config) *PermissionHandler {
+func NewPermissionHandler(notifier notification.Notifier, cfg *config.Config) *PermissionHandler {
 	return &PermissionHandler{
 		notifier: notifier,
 		config:   cfg,

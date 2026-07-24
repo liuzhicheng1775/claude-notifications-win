@@ -14,6 +14,7 @@ type Config struct {
 type NotificationsConfig struct {
 	Stop       StopConfig       `json:"stop"`
 	Permission PermissionConfig `json:"permission"`
+	Feishu     FeishuConfig     `json:"feishu"`
 }
 
 type StopConfig struct {
@@ -22,6 +23,14 @@ type StopConfig struct {
 
 type PermissionConfig struct {
 	Enabled bool `json:"enabled"`
+}
+
+// FeishuConfig 飞书自定义机器人通知配置。
+// Secret 可选，非空时启用加签校验。
+type FeishuConfig struct {
+	Enabled bool   `json:"enabled"`
+	Webhook string `json:"webhook"`
+	Secret  string `json:"secret"`
 }
 
 var defaultConfig = &Config{

@@ -18,12 +18,12 @@ type ClaudeHookPayload struct {
 }
 
 func HandleStopHook() error {
-	notifier := notification.NewWindowsNotifier()
 	cfg, err := config.Load()
 	if err != nil {
 		cfg = &config.Config{}
 	}
 
+	notifier := BuildNotifier(cfg)
 	handler := hooks.NewStopHandler(notifier, cfg)
 
 	// Get optional reason from args
@@ -36,12 +36,12 @@ func HandleStopHook() error {
 }
 
 func HandlePermissionHook() error {
-	notifier := notification.NewWindowsNotifier()
 	cfg, err := config.Load()
 	if err != nil {
 		cfg = &config.Config{}
 	}
 
+	notifier := BuildNotifier(cfg)
 	handler := hooks.NewPermissionHandler(notifier, cfg)
 
 	// Get prompt from args
@@ -152,4 +152,20 @@ func extractArg(prefix string) string {
 		}
 	}
 	return ""
+}
+
+// BuildNotifier 根据配置组装通知器。
+// Windows 通知始终启用；飞书在 enabled 且 webhook 非空时启用。
+// 多渠道时用 MultiNotifier 聚合，任一渠道成功即视为成功。
+func BuildNotifier(cfg *config.Config) notification.Notifier {
+	var notifiers []notification.Notifier
+	notifiers = append(notifiers, notification.NewWindowsNotifier())
+	if cfg != nil && cfg.Notifications.Feishu.Enabled && cfg.Notifications.Feishu.Webhook != "" {
+		notifiers = append(notifiers, notification.NewFeishuNotifier(
+			cfg.Notifications.Feishu.Webhook, cfg.Notifications.Feishu.Secret))
+	}
+	if len(notifiers) == 1 {
+		return notifiers[0]
+	}
+	return notification.NewMultiNotifier(notifiers...)
 }
