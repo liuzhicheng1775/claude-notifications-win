@@ -25,7 +25,7 @@
 ### 方法一：手动安装（推荐）
 
 1. 从 [Releases](https://github.com/liuzhicheng1775/claude-notifications-win/releases) 下载最新的 `notify.exe`
-2. 在终端执行一键配置向导（PowerShell / cmd 中需要 `.\` 前缀）：
+2. 双击 `notify.exe` 启动配置向导，或在终端执行（PowerShell / cmd 中需要 `.\` 前缀）：
    ```powershell
    .\notify.exe init
    ```

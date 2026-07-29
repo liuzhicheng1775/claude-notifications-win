@@ -15,13 +15,21 @@ var version = "dev" // Set via -ldflags at build time
 
 func main() {
 	if len(os.Args) < 2 {
-		printUsage()
-		// 双击运行时控制台窗口会随退出立即关闭，交互终端下等待回车让用户看清提示
 		if isInteractive() {
+			// 双击运行：直接进入配置向导（引导填飞书 webhook 等），
+			// 结束后等待回车，避免控制台窗口闪关看不到结果
+			exitCode := 0
+			if err := cmd.RunInit(); err != nil {
+				fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
+				exitCode = 1
+			}
 			fmt.Println()
-			fmt.Print("按回车键退出（配置请运行: .\\notify.exe init）...")
+			fmt.Print("按回车键退出...")
 			bufio.NewReader(os.Stdin).ReadString('\n')
+			os.Exit(exitCode)
 		}
+		// 非交互（管道/脚本调用）：打印用法后退出
+		printUsage()
 		os.Exit(1)
 	}
 

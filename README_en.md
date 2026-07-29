@@ -27,7 +27,7 @@ Windows toast notification tool for Claude Code - get notified when tasks finish
 ### Option 1: Manual Installation (Recommended)
 
 1. Download the latest `notify.exe` from [Releases](https://github.com/liuzhicheng1775/claude-notifications-win/releases)
-2. Run the one-click setup wizard (in PowerShell / cmd the `.\` prefix is required):
+2. Double-click `notify.exe` to launch the setup wizard, or run it in a terminal (in PowerShell / cmd the `.\` prefix is required):
    ```powershell
    .\notify.exe init
    ```
