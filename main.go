@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"os"
+	"syscall"
+	"unsafe"
 
 	"claude-notifications-win/src/cmd"
 )
@@ -13,6 +16,12 @@ var version = "dev" // Set via -ldflags at build time
 func main() {
 	if len(os.Args) < 2 {
 		printUsage()
+		// 双击运行时控制台窗口会随退出立即关闭，交互终端下等待回车让用户看清提示
+		if isInteractive() {
+			fmt.Println()
+			fmt.Print("按回车键退出（配置请运行: .\\notify.exe init）...")
+			bufio.NewReader(os.Stdin).ReadString('\n')
+		}
 		os.Exit(1)
 	}
 
@@ -50,8 +59,19 @@ func main() {
 	}
 }
 
+var procGetConsoleMode = syscall.NewLazyDLL("kernel32.dll").NewProc("GetConsoleMode")
+
+// isInteractive 判断 stdin 是否为真实控制台（双击运行场景）。
+// 不能用 ModeCharDevice：Windows 上 NUL（/dev/null）也是字符设备；
+// GetConsoleMode 只对真实控制台句柄成功，管道 / NUL / 重定向均失败。
+func isInteractive() bool {
+	var mode uint32
+	r, _, _ := procGetConsoleMode.Call(os.Stdin.Fd(), uintptr(unsafe.Pointer(&mode)))
+	return r != 0
+}
+
 func printUsage() {
-	fmt.Fprintln(os.Stderr, "Usage: notify.exe <command>")
+	fmt.Fprintln(os.Stderr, "Usage: .\\notify.exe <command>")
 	fmt.Fprintln(os.Stderr, "Commands:")
 	fmt.Fprintln(os.Stderr, "  version    Show version")
 	fmt.Fprintln(os.Stderr, "  stop       Handle task completion notification")

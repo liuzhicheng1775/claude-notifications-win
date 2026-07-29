@@ -8,7 +8,10 @@ import (
 	"testing"
 )
 
-const fakeExe = "C:/fake/notify.exe"
+const fakeExe = `C:\fake\notify.exe`
+
+// fakeExeCmd 是 fakeExe 对应的 bash 兼容 hook 命令前缀。
+const fakeExeCmd = `"C:/fake/notify.exe"`
 
 func TestInstallHooks_EmptyFile(t *testing.T) {
 	dir, _ := ioutil.TempDir("", "hooktest")
@@ -26,8 +29,8 @@ func TestInstallHooks_EmptyFile(t *testing.T) {
 	}
 
 	stopCmds := extractCommands(t, hooks, "Stop")
-	if len(stopCmds) != 1 || stopCmds[0] != fakeExe+" stop" {
-		t.Errorf("Stop 命令期望 [%s stop], 实际 %v", fakeExe, stopCmds)
+	if len(stopCmds) != 1 || stopCmds[0] != fakeExeCmd+" stop" {
+		t.Errorf("Stop 命令期望 [%s stop], 实际 %v", fakeExeCmd, stopCmds)
 	}
 
 	notifGroups, _ := hooks["Notification"].([]interface{})
@@ -90,7 +93,7 @@ func TestInstallHooks_PreserveOtherFields(t *testing.T) {
 	stopCmds := extractCommands(t, hooks, "Stop")
 	found := false
 	for _, c := range stopCmds {
-		if c == fakeExe+" stop" {
+		if c == fakeExeCmd+" stop" {
 			found = true
 		}
 	}
@@ -124,6 +127,51 @@ func TestInstallHooks_PreserveOtherMatcher(t *testing.T) {
 	}
 	if !foundMatcher {
 		t.Error("应包含 permission_prompt matcher")
+	}
+}
+
+func TestInstallHooks_ReplacesLegacyCommands(t *testing.T) {
+	dir, _ := ioutil.TempDir("", "hooktest")
+	defer os.RemoveAll(dir)
+	settingsPath := filepath.Join(dir, "settings.json")
+	// 旧版本写入的 bash 不兼容命令（反斜杠未加引号）+ 一个无关命令
+	initial := `{"hooks":{` +
+		`"Stop":[{"hooks":[{"type":"command","command":"C:\\fake\\notify.exe stop"}]}],` +
+		`"Notification":[{"matcher":"permission_prompt","hooks":[{"type":"command","command":"C:/fake/notify.exe permission"}]},` +
+		`{"matcher":"other","hooks":[{"type":"command","command":"other.exe"}]}]` +
+		`}}`
+	ioutil.WriteFile(settingsPath, []byte(initial), 0644)
+
+	if err := installHooks(settingsPath, fakeExe); err != nil {
+		t.Fatalf("installHooks 失败: %v", err)
+	}
+
+	data := loadSettings(t, settingsPath)
+	hooks := data["hooks"].(map[string]interface{})
+
+	stopCmds := extractCommands(t, hooks, "Stop")
+	if len(stopCmds) != 1 || stopCmds[0] != fakeExeCmd+" stop" {
+		t.Errorf("旧 Stop 命令应被替换为 [%s stop], 实际 %v", fakeExeCmd, stopCmds)
+	}
+
+	notifCmds := extractCommands(t, hooks, "Notification")
+	if len(notifCmds) != 2 {
+		t.Fatalf("Notification 应有 2 个命令 (notify + other), 实际 %v", notifCmds)
+	}
+	foundNew, foundOther := false, false
+	for _, c := range notifCmds {
+		if c == fakeExeCmd+" permission" {
+			foundNew = true
+		}
+		if c == "other.exe" {
+			foundOther = true
+		}
+	}
+	if !foundNew {
+		t.Errorf("旧 Notification 命令应被替换为 [%s permission], 实际 %v", fakeExeCmd, notifCmds)
+	}
+	if !foundOther {
+		t.Errorf("无关命令 other.exe 应保留, 实际 %v", notifCmds)
 	}
 }
 

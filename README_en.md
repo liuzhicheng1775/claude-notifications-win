@@ -27,9 +27,9 @@ Windows toast notification tool for Claude Code - get notified when tasks finish
 ### Option 1: Manual Installation (Recommended)
 
 1. Download the latest `notify.exe` from [Releases](https://github.com/liuzhicheng1775/claude-notifications-win/releases)
-2. Run the one-click setup wizard:
-   ```bash
-   notify.exe init
+2. Run the one-click setup wizard (in PowerShell / cmd the `.\` prefix is required):
+   ```powershell
+   .\notify.exe init
    ```
    The wizard interactively walks you through everything:
    - Configure Feishu notifications (optional, press Enter to skip)
@@ -98,11 +98,11 @@ If you prefer not to use the `init` wizard, you can configure manually:
 
 | Command | Purpose |
 |---------|---------|
-| `notify.exe init` | Interactive setup wizard (Feishu + config.json + hooks in one shot) |
-| `notify.exe test` | Send a test message to all enabled channels, report ✓/✗ per channel |
+| `.\notify.exe init` | Interactive setup wizard (Feishu + config.json + hooks in one shot) |
+| `.\notify.exe test` | Send a test message to all enabled channels, report ✓/✗ per channel |
 | `notify.exe stop` | Trigger task-complete notification (called by Claude Code Stop hook) |
 | `notify.exe permission` | Trigger permission-prompt notification (called by Claude Code Notification hook) |
-| `notify.exe version` | Show version |
+| `.\notify.exe version` | Show version |
 
 ## Usage
 
@@ -115,15 +115,15 @@ After installation and configuration, notifications appear automatically:
 
 Verify your setup:
 
-```bash
-notify.exe test
+```powershell
+.\notify.exe test
 ```
 
 Sends a test message to Windows toast and any enabled Feishu channel, then prints an `N/M channels succeeded` summary.
 
 ## Feishu Notification (Optional)
 
-> Recommended: use the `notify.exe init` wizard. Below is the manual configuration reference. See [docs/feishu-notification.md](./docs/feishu-notification.md) for detailed steps.
+> Recommended: use the `.\notify.exe init` wizard. Below is the manual configuration reference. See [docs/feishu-notification.md](./docs/feishu-notification.md) for detailed steps.
 
 In addition to Windows toast, notifications can be sent to a Feishu group. Create a custom bot in your Feishu group, obtain the webhook URL (and secret if signature verification is enabled), and add it to `config.json`:
 

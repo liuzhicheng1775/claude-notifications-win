@@ -22,10 +22,10 @@
 
 ## 二、一键配置（推荐）
 
-拿到 webhook 和 secret 后，直接运行向导：
+拿到 webhook 和 secret 后，直接运行向导（PowerShell / cmd 中需要 `.\` 前缀）：
 
-```bash
-notify.exe init
+```powershell
+.\notify.exe init
 ```
 
 向导交互流程：
@@ -122,8 +122,8 @@ notify.exe init
 
 ### 用 test 命令一键测试（推荐）
 
-```bash
-notify.exe test
+```powershell
+.\notify.exe test
 ```
 
 会向 Windows 通知和已启用的飞书分别发一条测试消息，并汇总：
@@ -166,9 +166,9 @@ notify.exe permission
 | 飞书报 `19021` 等错误码 | webhook URL 错误，或机器人被删了。重新创建机器人 |
 | 两个都没收到 | 检查 `notify.exe` 路径和 `settings.json` 配置 |
 | Windows 弹了但飞书超时 | 网络问题（需能访问 `open.feishu.cn`），或机器人设置了 IP 白名单 |
-| 任务完成不推送 | `~/.claude/settings.json` 缺少 Stop hook，重新跑 `notify.exe init` |
+| 任务完成不推送 | `~/.claude/settings.json` 缺少 Stop hook，重新跑 `.\notify.exe init` |
 
-查看具体错误：在终端直接运行 `notify.exe stop` 或 `notify.exe test`，错误会打印到 stderr。
+查看具体错误：在终端直接运行 `.\notify.exe stop` 或 `.\notify.exe test`，错误会打印到 stderr。
 
 ---
 

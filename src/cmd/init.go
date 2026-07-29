@@ -75,7 +75,7 @@ func RunInit() error {
 	fmt.Println()
 	fmt.Println("================================")
 	fmt.Println("配置完成！后续 Claude Code 任务完成 / 请求授权时会自动通知。")
-	fmt.Println("提示：修改配置可重新运行 notify.exe init，或直接编辑 config.json。")
+	fmt.Println("提示：修改配置可重新运行 .\\notify.exe init，或直接编辑 config.json。")
 	return nil
 }
 
